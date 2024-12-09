@@ -5,9 +5,10 @@ log_success() {
   echo -e "\e[32m[SUCCESS]\e[0m $1"
 }
 
-# Function to log error messages
+# Function to log error messages with detailed parameter order information
 log_error() {
   echo -e "\e[31m[ERROR]\e[0m $1"
+  echo -e "\e[31m[ERROR]\e[0m Please ensure the correct order of parameters: NUM_CLONES, MEMORY (in MB), CPUS."
   exit 1
 }
 
@@ -31,6 +32,17 @@ modify_vm() {
   VM_NAME="$1"
   MEMORY="$2"
   CPUS="$3"
+
+  # Validate memory and CPU values
+  if [ "$MEMORY" -lt 4 ]; then
+    log_error "Invalid memory size: $MEMORY MB. It must be at least 4 MB. (Order: NUM_CLONES, MEMORY, CPUS)"
+  fi
+  if [ "$MEMORY" -gt 2097152 ]; then
+    log_error "Invalid memory size: $MEMORY MB. It must be less than 2,097,152 MB. (Order: NUM_CLONES, MEMORY, CPUS)"
+  fi
+  if [ "$CPUS" -lt 1 ]; then
+    log_error "Invalid CPU count: $CPUS. It must be at least 1 CPU. (Order: NUM_CLONES, MEMORY, CPUS)"
+  fi
 
   echo "Updating VM $VM_NAME with $MEMORY MB memory and $CPUS CPUs..."
   vboxmanage modifyvm "$VM_NAME" --memory "$MEMORY" --cpus "$CPUS" || log_error "Failed to update $VM_NAME with $MEMORY MB memory and $CPUS CPUs"
@@ -100,7 +112,7 @@ update_node_vms() {
 
 # Check for action parameter (clone or update)
 if [ $# -lt 2 ]; then
-  log_error "Please provide ACTION (clone, update_master, or update_nodes), and MEMORY, CPUS values."
+  log_error "Please provide ACTION (clone, update_master, or update_nodes), and MEMORY, CPUS values. (Order: NUM_CLONES, MEMORY, CPUS)"
 fi
 
 ACTION="$1"
