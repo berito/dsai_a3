@@ -13,7 +13,7 @@ log_error() {
 
 # Function to get the names of all VMs (including clones)
 get_vms() {
-  # List all VMs and filter based on the naming pattern "node_" or your preferred naming convention
+  # List all VMs and filter based on the naming pattern "master" or "node_"
   vms=$(vboxmanage list vms | grep -E 'master|node_' | awk -F '"' '{print $2}')
 
   if [ -z "$vms" ]; then
@@ -21,6 +21,22 @@ get_vms() {
   fi
   
   echo "$vms"
+}
+
+# Function to get the names of all running VMs
+get_running_vms() {
+  # List all running VMs
+  running_vms=$(vboxmanage list runningvms | awk -F '"' '{print $2}')
+
+  echo "$running_vms"
+}
+
+# Function to get the names of all stopped VMs
+get_stopped_vms() {
+  # List all VMs and filter out the running ones to get stopped ones
+  stopped_vms=$(get_vms | grep -v -f <(get_running_vms))
+
+  echo "$stopped_vms"
 }
 
 # Function to start a specific VM in headless mode
@@ -43,31 +59,72 @@ stop_vm() {
   log_success "VM $VM_NAME stopped."
 }
 
-# Main script to start or stop all VMs
+# Function to list all VMs (running and stopped)
+list_all_vms() {
+  echo "Listing all VMs:"
+  get_vms
+}
+
+# Function to list all running VMs
+list_running_vms() {
+  echo "Listing running VMs:"
+  running_vms=$(get_running_vms)
+  
+  if [ -z "$running_vms" ]; then
+    echo "No VMs are running."
+  else
+    echo "$running_vms"
+  fi
+}
+
+# Function to manage all running VMs (stop them)
+stop_all_running_vms() {
+  running_vms=$(get_running_vms)
+
+  if [ -z "$running_vms" ]; then
+    log_error "No running VMs to stop."
+  fi
+
+  for vm in $running_vms; do
+    stop_vm "$vm"
+  done
+}
+
+# Function to start all stopped VMs
+start_all_stopped_vms() {
+  stopped_vms=$(get_stopped_vms)
+
+  if [ -z "$stopped_vms" ]; then
+    log_error "No stopped VMs to start."
+  fi
+
+  for vm in $stopped_vms; do
+    start_vm "$vm"
+  done
+}
+
+# Main script to start, stop, list all VMs or run specific actions
 manage_vms() {
   ACTION="$1"
   
-  if [ "$ACTION" != "start" ] && [ "$ACTION" != "stop" ]; then
-    log_error "Invalid parameter. Please specify 'start' or 'stop'."
+  if [ "$ACTION" != "start" ] && [ "$ACTION" != "stop" ] && [ "$ACTION" != "list" ] && [ "$ACTION" != "listall" ]; then
+    log_error "Invalid parameter. Please specify 'start', 'stop', 'list', or 'listall'."
   fi
   
-  # Get the names of all VMs
-  vms=$(get_vms)
-  
-  # Perform the specified action (start or stop) on each VM
-  for vm in $vms
-  do
-    if [ "$ACTION" == "start" ]; then
-      start_vm "$vm"
-    elif [ "$ACTION" == "stop" ]; then
-      stop_vm "$vm"
-    fi
-  done
+  if [ "$ACTION" == "start" ]; then
+    start_all_stopped_vms
+  elif [ "$ACTION" == "stop" ]; then
+    stop_all_running_vms
+  elif [ "$ACTION" == "list_running" ]; then
+    list_running_vms
+  elif [ "$ACTION" == "list" ]; then
+    list_all_vms
+  fi
 }
 
 # Check if the action parameter is provided
 if [ $# -eq 0 ]; then
-  log_error "Please provide an action: 'start' or 'stop'."
+  log_error "Please provide an action: 'start', 'stop', 'list_running', or 'list'."
 fi
 
 # Run the manage_vms function with the specified action

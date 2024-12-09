@@ -37,54 +37,45 @@ clone_vm() {
   log_success "VM $CLONE_VM_NAME cloned, configured with $MEMORY MB RAM, $CPUS CPUs, and network setup."
 }
 
-# Function to mount NFS directory to the VM
-mount_nfs() {
-  CLONE_VM_NAME="$1"
-  NFS_DIRECTORY="$2"
-  echo "Mounting NFS directory $NFS_DIRECTORY to VM $CLONE_VM_NAME..."
-  
-  # Assuming you have a shared folder on your host to mount inside the VM
-  vboxmanage sharedfolder add "$CLONE_VM_NAME" --name "shared" --hostpath "$NFS_DIRECTORY" --automount || log_error "Failed to mount NFS directory on VM $CLONE_VM_NAME"
-  
-  log_success "NFS directory mounted successfully to VM $CLONE_VM_NAME."
-}
-
 # Main script to clone multiple VMs
 clone_multiple_vms() {
   ORIGINAL_VM_NAME="$1"
   NUM_CLONES="$2"
   MEMORY="$3"
   CPUS="$4"
-  NFS_DIRECTORY="$5"
 
   for i in $(seq 1 "$NUM_CLONES"); do
     CLONE_VM_NAME="node_$i"
     
     # Clone the VM
     clone_vm "$ORIGINAL_VM_NAME" "$CLONE_VM_NAME" "$MEMORY" "$CPUS"
-    
-    # Mount the NFS directory
-    mount_nfs "$CLONE_VM_NAME" "$NFS_DIRECTORY"
-    
+      
     echo "Finished setting up $CLONE_VM_NAME."
   done
 }
 
-# Run the script with required parameters
+# Run the script with required parameters from command line
 main() {
-  # Parameters (modify as needed)
+  # Check if the required arguments are passed
+  if [ $# -lt 3 ]; then
+    echo "Usage: $0 <num_clones> <memory_in_MB> <cpus>"
+    exit 1
+  fi
+
+  # Parameters from command line
+  NUM_CLONES="$1"
+  MEMORY="$2"
+  CPUS="$3"
+  
+  # Set the original VM name (hardcoded as master in this case)
   ORIGINAL_VM_NAME="master"
-  NUM_CLONES=3
-  MEMORY=2048  # 2GB RAM for each clone
-  CPUS=2       # 2 CPUs for each clone
-  NFS_DIRECTORY="/path/to/nfs/share"  # Replace with your NFS directory path
 
   # Verify VirtualBox installation
   verify_virtualbox
   
   # Clone and configure multiple VMs
-  clone_multiple_vms "$ORIGINAL_VM_NAME" "$NUM_CLONES" "$MEMORY" "$CPUS" "$NFS_DIRECTORY"
+  clone_multiple_vms "$ORIGINAL_VM_NAME" "$NUM_CLONES" "$MEMORY" "$CPUS"
 }
 
 # Run the main function
-main
+main "$@"
