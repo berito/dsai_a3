@@ -65,6 +65,8 @@ EOF
   
   log_success "Static IP $STATIC_IP configured for VM $VM_NAME."
 }
+
+# Function to check if the shared folder is mounted
 is_shared_folder_mounted() {
   VM_NAME="$1"
   SHARED_FOLDER_NAME="shared"
@@ -78,9 +80,11 @@ is_shared_folder_mounted() {
     return 1  # Shared folder not mounted
   fi
 }
+
 # Function to mount directories between host and guest
 mount_directories() {
- if is_shared_folder_mounted "$VM_NAME"; then
+  VM_NAME="$1"
+  if is_shared_folder_mounted "$VM_NAME"; then
     echo "Folder is already mounted on $VM_NAME."
     log_success "Directory $HOST_DIR is already mounted to $GUEST_DIR on VM $VM_NAME."
   else
