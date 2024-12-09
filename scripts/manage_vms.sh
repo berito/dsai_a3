@@ -77,17 +77,17 @@ list_running_vms() {
   fi
 }
 
-# Function to manage all running VMs (stop them)
+# Function to stop all running VMs
 stop_all_running_vms() {
   running_vms=$(get_running_vms)
 
   if [ -z "$running_vms" ]; then
-    log_error "No running VMs to stop."
+    echo "No running VMs to stop."
+  else
+    for vm in $running_vms; do
+      stop_vm "$vm"
+    done
   fi
-
-  for vm in $running_vms; do
-    stop_vm "$vm"
-  done
 }
 
 # Function to start all VMs that are not running
@@ -96,12 +96,11 @@ start_all_non_running_vms() {
 
   if [ -z "$stopped_vms" ]; then
     echo "All VMs are already running."
-    return 0
+  else
+    for vm in $stopped_vms; do
+      start_vm "$vm"
+    done
   fi
-
-  for vm in $stopped_vms; do
-    start_vm "$vm"
-  done
 }
 
 # Main script to start, stop, list all VMs or run specific actions
@@ -109,7 +108,7 @@ manage_vms() {
   ACTION="$1"
   
   if [ "$ACTION" != "start" ] && [ "$ACTION" != "stop" ] && [ "$ACTION" != "list" ] && [ "$ACTION" != "list_running" ]; then
-    log_error "Invalid parameter. Please specify 'start', 'stop', 'list', or 'listall'."
+    log_error "Invalid parameter. Please specify 'start', 'stop', 'list', or 'list_running'."
   fi
   
   if [ "$ACTION" == "start" ]; then
@@ -125,7 +124,7 @@ manage_vms() {
 
 # Check if the action parameter is provided
 if [ $# -eq 0 ]; then
-  log_error "Please provide an action: 'start', 'stop', 'list', or 'list_running'."
+  log_error "Please provide an action: 'start', 'stop', 'list', or 'listall'."
 fi
 
 # Run the manage_vms function with the specified action
