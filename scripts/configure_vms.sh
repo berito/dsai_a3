@@ -29,20 +29,21 @@ is_vm_running() {
   [ "$state" == "\"running\"" ]
 }
 
-# Function to configure the network for the VM
 configure_network() {
   VM_NAME="$1"
+  NETWORK_TYPE="$2"  # "NAT" or "Bridged"
+
   echo "Configuring network type $NETWORK_TYPE for VM $VM_NAME..."
   
   if [ "$NETWORK_TYPE" == "NAT" ]; then
     VBoxManage modifyvm "$VM_NAME" --nic1 nat || log_error "Failed to configure NAT for VM $VM_NAME"
+    log_success "Network configured for VM $VM_NAME using NAT."
   elif [ "$NETWORK_TYPE" == "Bridged" ]; then
     VBoxManage modifyvm "$VM_NAME" --nic1 bridged || log_error "Failed to configure Bridged network for VM $VM_NAME"
+    log_success "Network configured for VM $VM_NAME using Bridged."
   else
-    log_error "Unsupported network type $NETWORK_TYPE"
+    log_error "Unsupported network type $NETWORK_TYPE. Use 'NAT' or 'Bridged'."
   fi
-  
-  log_success "Network configured for VM $VM_NAME using $NETWORK_TYPE."
 }
 
 # Function to configure static IP for the VM
@@ -50,6 +51,11 @@ configure_static_ip() {
   VM_NAME="$1"
   STATIC_IP="$2"
   echo "Configuring static IP $STATIC_IP for VM $VM_NAME..."
+  
+  # Ensure the VM is running
+  if ! is_vm_running "$VM_NAME"; then
+    log_error "VM $VM_NAME is not running. Cannot configure static IP."
+  fi
   
   ssh ubuntu@"$VM_NAME" <<EOF
     sudo bash -c 'echo "network:
