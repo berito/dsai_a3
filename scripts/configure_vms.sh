@@ -85,18 +85,15 @@ is_shared_folder_mounted() {
 mount_directories() {
   VM_NAME="$1"
   SHARED_FOLDER_NAME="shared"
-  
-  # Check if the shared folder already exists
-  existing_shared_folders=$(VBoxManage showvminfo "$VM_NAME" --details | grep "SharedFolder")
-  
-  if echo "$existing_shared_folders" | grep -q "$SHARED_FOLDER_NAME"; then
-    echo "Shared folder '$SHARED_FOLDER_NAME' already exists on $VM_NAME."
-    log_success "Directory $HOST_DIR is already mounted to $GUEST_DIR on VM $VM_NAME."
-  else
-    echo "Mounting $HOST_DIR to $GUEST_DIR on VM $VM_NAME..."
-    VBoxManage sharedfolder add "$VM_NAME" --name "$SHARED_FOLDER_NAME" --hostpath "$HOST_DIR" --automount || log_error "Failed to mount directory for VM $VM_NAME."
-    log_success "Directory $HOST_DIR mounted to $GUEST_DIR on VM $VM_NAME."
-  fi
+
+  # Try to remove the existing shared folder (if it exists)
+  echo "Removing existing shared folder '$SHARED_FOLDER_NAME' (if any)..."
+  VBoxManage sharedfolder remove "$VM_NAME" --name "$SHARED_FOLDER_NAME" 2>/dev/null
+
+  # Add the shared folder
+  echo "Mounting $HOST_DIR to $GUEST_DIR on VM $VM_NAME..."
+  VBoxManage sharedfolder add "$VM_NAME" --name "$SHARED_FOLDER_NAME" --hostpath "$HOST_DIR" --automount || log_error "Failed to mount directory for VM $VM_NAME."
+  log_success "Directory $HOST_DIR mounted to $GUEST_DIR on VM $VM_NAME."
 }
 
 # Function to install packages in the guest OS
