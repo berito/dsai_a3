@@ -71,14 +71,25 @@ configure_storage() {
 create_preseed_iso() {
   PRESEED_FILE="$1"
   PRESEED_ISO="$2"
+  ISO_DIR="$HOME/preseed_iso"  # Directory to hold the preseed file for ISO creation
+
+  # Check if the preseed ISO already exists
   if [ -f "$PRESEED_ISO" ]; then
     echo "Preseed ISO \"$PRESEED_ISO\" already created."
   else
     echo "Creating ISO for preseed file..."
-    mkisofs -o "$PRESEED_ISO" -b "$PRESEED_FILE" || log_error "Failed to create preseed ISO"
+
+    # Create the directory if it doesn't exist
+    mkdir -p "$ISO_DIR"
+
+    # Copy the preseed file into the directory
+    cp "$PRESEED_FILE" "$ISO_DIR/"
+
+    # Create the ISO using genisoimage/mkisofs with the directory and preseed file
+    mkisofs -o "$PRESEED_ISO" -b "$PRESEED_FILE" "$ISO_DIR" || log_error "Failed to create preseed ISO"
+
     log_success "Preseed ISO created."
   fi
-
 }
 
 # Function to attach the preseed ISO to the VM
