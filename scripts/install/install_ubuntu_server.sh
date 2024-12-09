@@ -69,6 +69,7 @@ configure_storage() {
 
 # Function to create an ISO for the preseed file
 create_preseed_iso() {
+  create_preseed_iso() {
   PRESEED_FILE="$1"
   PRESEED_ISO="$2"
   ISO_DIR="$HOME/preseed_iso"  # Directory to hold the preseed file for ISO creation
@@ -91,18 +92,6 @@ create_preseed_iso() {
     log_success "Preseed ISO created."
   fi
 }
-
-# Function to attach the preseed ISO to the VM
-attach_preseed() {
-  VM_NAME="$1"
-  PRESEED_ISO="$2"
-  if vboxmanage showvminfo "$VM_NAME" | grep -q "$PRESEED_ISO"; then
-    echo "Preseed ISO \"$PRESEED_ISO\" already attached to VM \"$VM_NAME\"."
-  else
-    echo "Attaching preseed ISO for automated Ubuntu installation..."
-    vboxmanage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --medium "$PRESEED_ISO" || log_error "Failed to attach preseed ISO"
-    log_success "Preseed ISO attached."
-  fi
 
 }
 
