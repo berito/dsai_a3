@@ -53,18 +53,25 @@ fi
 configure_storage() {
   VM_NAME="$1"
   DISK_SIZE="$2"
-  VM_DIR="$(vboxmanage showvminfo "$VM_NAME" --machinereadable | grep "^ConfigFile=" | cut -d= -f2 | sed 's/\\$//')"
-  DISK_FILE="${VM_DIR}/${VM_NAME}.vdi"
 
-  if vboxmanage showvminfo "$VM_NAME" | grep -q "SATA Controller"; then
-    echo "Storage for VM \"$VM_NAME\" is already configured."
+  # Set the disk file path in the home directory
+  DISK_FILE="$HOME/${VM_NAME}.vdi"
+
+  # Check if the disk file already exists
+  if [ -f "$DISK_FILE" ]; then
+    echo "Disk file \"$DISK_FILE\" already exists."
   else
-    echo "Configuring VM storage with disk size: $DISK_SIZE MB..."
-    vboxmanage createhd --filename "$DISK_FILE" --size "$DISK_SIZE" || log_error "Failed to create virtual disk"
-    vboxmanage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI || log_error "Failed to add storage controller"
-    vboxmanage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --medium "$DISK_FILE" || log_error "Failed to attach virtual disk"
-    log_success "VM storage configured."
+    if vboxmanage showvminfo "$VM_NAME" | grep -q "SATA Controller"; then
+      echo "Storage for VM \"$VM_NAME\" is already configured."
+    else
+      echo "Configuring VM storage with disk size: $DISK_SIZE MB..."
+      vboxmanage createhd --filename "$DISK_FILE" --size "$DISK_SIZE" || log_error "Failed to create virtual disk"
+      vboxmanage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI || log_error "Failed to add storage controller"
+      vboxmanage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --medium "$DISK_FILE" || log_error "Failed to attach virtual disk"
+      log_success "VM storage configured."
+    fi
   fi
+
 
 }
 
