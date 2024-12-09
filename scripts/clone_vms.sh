@@ -8,7 +8,6 @@ log_success() {
 # Function to log error messages with detailed parameter order information
 log_error() {
   echo -e "\e[31m[ERROR]\e[0m $1"
-  echo -e "\e[31m[ERROR]\e[0m Please ensure the correct order of parameters: NUM_CLONES, MEMORY (in MB), CPUS."
   exit 1
 }
 
@@ -35,13 +34,13 @@ modify_vm() {
 
   # Validate memory and CPU values
   if [ "$MEMORY" -lt 4 ]; then
-    log_error "Invalid memory size: $MEMORY MB. It must be at least 4 MB. (Order: NUM_CLONES, MEMORY, CPUS)"
+    log_error "Invalid memory size: $MEMORY MB. It must be at least 4 MB. (Order: MEMORY, CPUS)"
   fi
   if [ "$MEMORY" -gt 2097152 ]; then
-    log_error "Invalid memory size: $MEMORY MB. It must be less than 2,097,152 MB. (Order: NUM_CLONES, MEMORY, CPUS)"
+    log_error "Invalid memory size: $MEMORY MB. It must be less than 2,097,152 MB. (Order: MEMORY, CPUS)"
   fi
   if [ "$CPUS" -lt 1 ]; then
-    log_error "Invalid CPU count: $CPUS. It must be at least 1 CPU. (Order: NUM_CLONES, MEMORY, CPUS)"
+    log_error "Invalid CPU count: $CPUS. It must be at least 1 CPU. (Order: MEMORY, CPUS)"
   fi
 
   echo "Updating VM $VM_NAME with $MEMORY MB memory and $CPUS CPUs..."
@@ -110,28 +109,44 @@ update_node_vms() {
   done
 }
 
-# Check for action parameter (clone or update)
+# Validate if sufficient parameters are passed for the action
 if [ $# -lt 2 ]; then
-  log_error "Please provide ACTION (clone, update_master, or update_nodes), and MEMORY, CPUS values. (Order: NUM_CLONES, MEMORY, CPUS)"
+  log_error "Insufficient parameters. Please provide ACTION (clone, update_master, or update_nodes), and appropriate parameters."
 fi
 
 ACTION="$1"
-MEMORY="$2"
-CPUS="$3"
 
 # Run the corresponding function based on the action parameter
 case "$ACTION" in
   "clone")
+    # Ensure that all necessary parameters are provided for cloning
+    if [ $# -ne 4 ]; then
+      log_error "For 'clone', you need to provide 4 parameters: ACTION (clone), NUM_CLONES, MEMORY, and CPUS. Example: ./script.sh clone 5 1024 2"
+    fi
+    NUM_CLONES="$2"
+    MEMORY="$3"
+    CPUS="$4"
     # Create clones of the master VM
     ORIGINAL_VM_NAME="master"  # Modify this if the original VM name changes
-    NUM_CLONES="$MEMORY"  # Assuming you pass the number of clones as the second parameter
     create_clones "$ORIGINAL_VM_NAME" "$NUM_CLONES" "$MEMORY" "$CPUS"
     ;;
   "update_master")
+    # Ensure that only memory and CPU are provided for updating master VM
+    if [ $# -ne 3 ]; then
+      log_error "For 'update_master', you need to provide 3 parameters: ACTION (update_master), MEMORY, and CPUS. Example: ./script.sh update_master 1024 2"
+    fi
+    MEMORY="$2"
+    CPUS="$3"
     # Update the master VM only
     update_master_vm "$MEMORY" "$CPUS"
     ;;
   "update_nodes")
+    # Ensure that only memory and CPU are provided for updating node VMs
+    if [ $# -ne 3 ]; then
+      log_error "For 'update_nodes', you need to provide 3 parameters: ACTION (update_nodes), MEMORY, and CPUS. Example: ./script.sh update_nodes 1024 2"
+    fi
+    MEMORY="$2"
+    CPUS="$3"
     # Update all node VMs
     update_node_vms "$MEMORY" "$CPUS"
     ;;
