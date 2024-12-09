@@ -31,35 +31,41 @@ get_running_vms() {
   echo "$running_vms"
 }
 
-# Function to get the names of all stopped VMs (not running)
-get_stopped_vms() {
-  # List all VMs and filter out the running ones to get stopped ones
-  stopped_vms=$(get_vms | grep -v -f <(get_running_vms))
+# Function to stop all running VMs
+stop_all_running_vms() {
+  # Get the names of all running VMs
+  running_vms=$(get_running_vms)
 
-  echo "$stopped_vms"
+  if [ -z "$running_vms" ]; then
+    log_success "No running VMs to stop."
+  else
+    for vm in $running_vms; do
+      echo "Stopping the VM $vm..."
+      vboxmanage controlvm "$vm" poweroff || log_error "Failed to stop VM $vm"
+      log_success "VM $vm stopped."
+    done
+  fi
 }
 
-# Function to start a specific VM in headless mode
-start_vm() {
-  VM_NAME="$1"
-  echo "Starting the VM $VM_NAME in headless mode..."
+# Function to start all stopped VMs
+start_all_stopped_vms() {
+  # Get the names of all VMs
+  vms=$(get_vms)
   
-  vboxmanage startvm "$VM_NAME" --type headless || log_error "Failed to start VM $VM_NAME"
-  
-  log_success "VM $VM_NAME started in headless mode."
+  # Get the names of all running VMs
+  running_vms=$(get_running_vms)
+
+  # Loop through all VMs and start those that are not running
+  for vm in $vms; do
+    if [[ ! " $running_vms " =~ " $vm " ]]; then
+      echo "Starting the VM $vm in headless mode..."
+      vboxmanage startvm "$vm" --type headless || log_error "Failed to start VM $vm"
+      log_success "VM $vm started in headless mode."
+    fi
+  done
 }
 
-# Function to stop a specific VM
-stop_vm() {
-  VM_NAME="$1"
-  echo "Stopping the VM $VM_NAME..."
-  
-  vboxmanage controlvm "$VM_NAME" poweroff || log_error "Failed to stop VM $VM_NAME"
-  
-  log_success "VM $VM_NAME stopped."
-}
-
-# Function to list all VMs (running and stopped)
+# Function to list all VMs
 list_all_vms() {
   echo "Listing all VMs:"
   get_vms
@@ -77,47 +83,21 @@ list_running_vms() {
   fi
 }
 
-# Function to stop all running VMs
-stop_all_running_vms() {
-  running_vms=$(get_running_vms)
-
-  if [ -z "$running_vms" ]; then
-    echo "No running VMs to stop."
-  else
-    for vm in $running_vms; do
-      stop_vm "$vm"
-    done
-  fi
-}
-
-# Function to start all VMs that are not running
-start_all_non_running_vms() {
-  stopped_vms=$(get_stopped_vms)
-
-  if [ -z "$stopped_vms" ]; then
-    echo "All VMs are already running."
-  else
-    for vm in $stopped_vms; do
-      start_vm "$vm"
-    done
-  fi
-}
-
 # Main script to start, stop, list all VMs or run specific actions
 manage_vms() {
   ACTION="$1"
   
-  if [ "$ACTION" != "start" ] && [ "$ACTION" != "stop" ] && [ "$ACTION" != "list" ] && [ "$ACTION" != "list_running" ]; then
-    log_error "Invalid parameter. Please specify 'start', 'stop', 'list', or 'list_running'."
+  if [ "$ACTION" != "start" ] && [ "$ACTION" != "stop" ] && [ "$ACTION" != "list" ] && [ "$ACTION" != "listall" ]; then
+    log_error "Invalid parameter. Please specify 'start', 'stop', 'list', or 'listall'."
   fi
   
   if [ "$ACTION" == "start" ]; then
-    start_all_non_running_vms
+    start_all_stopped_vms
   elif [ "$ACTION" == "stop" ]; then
     stop_all_running_vms
-  elif [ "$ACTION" == "list_running" ]; then
-    list_running_vms
   elif [ "$ACTION" == "list" ]; then
+    list_running_vms
+  elif [ "$ACTION" == "listall" ]; then
     list_all_vms
   fi
 }
