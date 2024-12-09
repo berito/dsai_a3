@@ -98,20 +98,20 @@ update_node_vms() {
 }
 
 # Check for action parameter (clone or update)
-if [ $# -lt 2 ]; then
-  log_error "Please provide ACTION (clone, update_master, or update_nodes), and MEMORY, CPUS values."
+if [ $# -lt 3 ]; then
+  log_error "Please provide ACTION (clone, update_master, or update_nodes), NUM_CLONES, MEMORY, and CPUS values."
 fi
 
 ACTION="$1"
-MEMORY="$2"
-CPUS="$3"
+NUM_CLONES="$2"
+MEMORY="$3"
+CPUS="$4"
 
 # Run the corresponding function based on the action parameter
 case "$ACTION" in
   "clone")
     # Create clones of the master VM
     ORIGINAL_VM_NAME="master"  # Modify this if the original VM name changes
-    NUM_CLONES="$MEMORY"  # Assuming you pass the number of clones as the second parameter
     create_clones "$ORIGINAL_VM_NAME" "$NUM_CLONES" "$MEMORY" "$CPUS"
     ;;
   "update_master")
