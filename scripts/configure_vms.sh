@@ -56,7 +56,7 @@ configure_static_ip() {
       version: 2
       renderer: networkd
       ethernets:
-        eth0:
+        enp2s0:
           dhcp4: no
           addresses:
             - $STATIC_IP/24" > /etc/netplan/01-netcfg.yaml'
