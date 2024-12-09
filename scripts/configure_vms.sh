@@ -46,7 +46,7 @@ configure_network() {
     VBoxManage modifyvm "$VM_NAME" --nic1 nat || log_error "Failed to configure NAT for VM $VM_NAME"
     log_success "Network configured for VM $VM_NAME using NAT."
   elif [ "$NETWORK_TYPE" == "Bridged" ]; then
-    VBoxManage modifyvm "$VM_NAME" --nic1 bridged || log_error "Failed to configure Bridged network for VM $VM_NAME"
+    VBoxManage modifyvm "$VM_NAME" --nic1 bridged "enp2s0" || log_error "Failed to configure Bridged network for VM $VM_NAME"
     log_success "Network configured for VM $VM_NAME using Bridged."
   else
     log_error "Unsupported network type $NETWORK_TYPE. Use 'NAT' or 'Bridged'."
