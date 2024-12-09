@@ -117,11 +117,20 @@ start_vm_headless() {
 
 # Function to automate OS installation using the preseed ISO
 automate_install() {
- VM_NAME="$1"
+VM_NAME="$1"
 ISO_FILE="$2"
 PRESEED_ISO="$3"  # Path to the ISO containing the preseed file
 
 echo "Automating the installation of Ubuntu Server..."
+
+# Check if SATA Controller exists; if not, create it
+if ! vboxmanage showvminfo "$VM_NAME" | grep -q "SATA Controller"; then
+  echo "SATA Controller not found. Creating one..."
+  vboxmanage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI || log_error "Failed to create SATA controller"
+  log_success "SATA Controller created."
+else
+  echo "SATA Controller already exists."
+fi
 
 # Check if the ISO file is already attached
 if vboxmanage showvminfo "$VM_NAME" | grep -q "$ISO_FILE"; then
@@ -143,6 +152,7 @@ fi
 
 echo "VM is now ready for Ubuntu installation with automated responses from preseed file."
 start_vm_headless "$VM_NAME"
+
 
 }
 
