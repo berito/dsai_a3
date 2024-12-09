@@ -117,42 +117,63 @@ start_vm_headless() {
 
 # Function to automate OS installation using the preseed ISO
 automate_install() {
-VM_NAME="$1"
-ISO_FILE="$2"
-PRESEED_ISO="$3"  # Path to the ISO containing the preseed file
+  VM_NAME="$1"
+  ISO_FILE="$2"
+  PRESEED_ISO="$3"  # Path to the ISO containing the preseed file
 
-echo "Automating the installation of Ubuntu Server..."
+  echo "Automating the installation of Ubuntu Server..."
 
-# Check if SATA Controller exists; if not, create it
-if ! vboxmanage showvminfo "$VM_NAME" | grep -q "SATA Controller"; then
-  echo "SATA Controller not found. Creating one..."
-  vboxmanage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI || log_error "Failed to create SATA controller"
-  log_success "SATA Controller created."
-else
-  echo "SATA Controller already exists."
-fi
+  # Check if SATA Controller exists; if not, create it
+  if ! vboxmanage showvminfo "$VM_NAME" | grep -q "SATA Controller"; then
+    echo "SATA Controller not found. Creating one..."
+    vboxmanage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI || log_error "Failed to create SATA controller"
+    log_success "SATA Controller created."
+  else
+    echo "SATA Controller already exists."
+  fi
 
-# Check if the ISO file is already attached
-if vboxmanage showvminfo "$VM_NAME" | grep -q "$ISO_FILE"; then
-  echo "ISO file \"$ISO_FILE\" is already attached to the VM \"$VM_NAME\"."
-else
-  echo "Attaching ISO file \"$ISO_FILE\"..."
-  vboxmanage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type dvddrive --medium "$ISO_FILE" || log_error "Failed to attach ISO file"
-  log_success "ISO file \"$ISO_FILE\" attached."
-fi
+  # Check if the ISO file is already attached
+  if vboxmanage showvminfo "$VM_NAME" | grep -q "$ISO_FILE"; then
+    echo "ISO file \"$ISO_FILE\" is already attached to the VM \"$VM_NAME\"."
+  else
+    echo "Attaching ISO file \"$ISO_FILE\"..."
+    vboxmanage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type dvddrive --medium "$ISO_FILE" || log_error "Failed to attach ISO file"
+    log_success "ISO file \"$ISO_FILE\" attached."
+  fi
 
-# Check if the preseed ISO is already attached
-if vboxmanage showvminfo "$VM_NAME" | grep -q "$PRESEED_ISO"; then
-  echo "Preseed ISO \"$PRESEED_ISO\" is already attached to the VM \"$VM_NAME\"."
-else
-  echo "Attaching preseed ISO for automated Ubuntu installation..."
-  attach_preseed "$VM_NAME" "$PRESEED_ISO"
-  log_success "Preseed ISO \"$PRESEED_ISO\" attached."
-fi
+  # Check if the preseed ISO is already attached
+  if vboxmanage showvminfo "$VM_NAME" | grep -q "$PRESEED_ISO"; then
+    echo "Preseed ISO \"$PRESEED_ISO\" is already attached to the VM \"$VM_NAME\"."
+  else
+    echo "Attaching preseed ISO for automated Ubuntu installation..."
+    attach_preseed "$VM_NAME" "$PRESEED_ISO"
+    log_success "Preseed ISO \"$PRESEED_ISO\" attached."
+  fi
 
-echo "VM is now ready for Ubuntu installation with automated responses from preseed file."
-start_vm_headless "$VM_NAME"
+  echo "VM is now ready for Ubuntu installation with automated responses from preseed file."
+   # Set boot order to DVD first
+  echo "Setting boot order to boot from DVD first..."
+  vboxmanage modifyvm "$VM_NAME" --boot1 dvd || log_error "Failed to set boot order"
 
+  start_vm_headless "$VM_NAME"
+ # Monitor VM for installation completion
+  echo "Monitoring installation process..."
+  while vboxmanage showvminfo "$VM_NAME" | grep -q "running (since"; do
+    echo "Installation in progress... Checking again in 30 seconds."
+    sleep 30
+  done
+
+  echo "Installation appears to be complete. Stopping the VM..."
+  vboxmanage controlvm "$VM_NAME" poweroff || log_error "Failed to power off the VM"
+  log_success "VM powered off after installation."
+
+  # Detach the ISOs after installation
+  echo "Detaching ISOs..."
+  vboxmanage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --medium none || log_error "Failed to detach installation ISO"
+  vboxmanage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --medium none || log_error "Failed to detach preseed ISO"
+  log_success "ISOs detached."
+
+  echo "Ubuntu Server installation on \"$VM_NAME\" is complete."
 
 }
 
