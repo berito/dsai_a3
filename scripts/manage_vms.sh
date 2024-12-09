@@ -109,7 +109,7 @@ manage_vms() {
   ACTION="$1"
   
   if [ "$ACTION" != "start" ] && [ "$ACTION" != "stop" ] && [ "$ACTION" != "list" ] && [ "$ACTION" != "list_running" ]; then
-    log_error "Invalid parameter. Please specify 'start', 'stop', 'list', or 'list_running'."
+    log_error "Invalid parameter. Please specify 'start', 'stop', 'list', or 'listall'."
   fi
   
   if [ "$ACTION" == "start" ]; then
@@ -124,4 +124,9 @@ manage_vms() {
 }
 
 # Check if the action parameter is provided
-if [ $# -eq 0 ]; th
+if [ $# -eq 0 ]; then
+  log_error "Please provide an action: 'start', 'stop', 'list', or 'list_running'."
+fi
+
+# Run the manage_vms function with the specified action
+manage_vms "$1"
