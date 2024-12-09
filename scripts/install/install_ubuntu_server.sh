@@ -53,7 +53,8 @@ fi
 configure_storage() {
   VM_NAME="$1"
   DISK_SIZE="$2"
-  DISK_FILE="$HOME/${VM_NAME}.vdi"
+  VM_DIR="$(vboxmanage showvminfo "$VM_NAME" --machinereadable | grep "^ConfigFile=" | cut -d= -f2 | sed 's/\\$//')"
+  DISK_FILE="${VM_DIR}/${VM_NAME}.vdi"
 
   if vboxmanage showvminfo "$VM_NAME" | grep -q "SATA Controller"; then
     echo "Storage for VM \"$VM_NAME\" is already configured."
@@ -69,7 +70,6 @@ configure_storage() {
 
 # Function to create an ISO for the preseed file
 create_preseed_iso() {
-  create_preseed_iso() {
   PRESEED_FILE="$1"
   PRESEED_ISO="$2"
   ISO_DIR="$HOME/preseed_iso"  # Directory to hold the preseed file for ISO creation
@@ -93,7 +93,7 @@ create_preseed_iso() {
   fi
 }
 
-}
+
 
 # Function to start the VM in headless mode
 start_vm_headless() {
