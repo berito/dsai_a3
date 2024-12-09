@@ -26,14 +26,12 @@ CPUS="$3"
 
 if vboxmanage list vms | grep -q "\"$VM_NAME\""; then
   echo "VM with name \"$VM_NAME\" already exists."
-  exit 0
+else
+  echo "Creating Virtual Machine with name: $VM_NAME, memory: $MEMORY MB, CPUs: $CPUS..."
+  vboxmanage createvm --name "$VM_NAME" --ostype "Ubuntu_64" --register || log_error "Failed to create VM"
+  vboxmanage modifyvm "$VM_NAME" --memory "$MEMORY" --cpus "$CPUS" --nic1 nat --audio none --boot1 dvd --vrde on || log_error "Failed to configure VM"
+  log_success "Virtual Machine created and configured with name: $VM_NAME, memory: $MEMORY MB, CPUs: $CPUS."
 fi
-
-echo "Creating Virtual Machine with name: $VM_NAME, memory: $MEMORY MB, CPUs: $CPUS..."
-vboxmanage createvm --name "$VM_NAME" --ostype "Ubuntu_64" --register || log_error "Failed to create VM"
-vboxmanage modifyvm "$VM_NAME" --memory "$MEMORY" --cpus "$CPUS" --nic1 nat --audio none --boot1 dvd --vrde on || log_error "Failed to configure VM"
-log_success "Virtual Machine created and configured with name: $VM_NAME, memory: $MEMORY MB, CPUs: $CPUS."
-
 }
 
 # Function to download Ubuntu Server ISO
