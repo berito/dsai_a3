@@ -20,13 +20,20 @@ verify_virtualbox() {
 
 # Function to create a virtual machine with customizable VM name, memory, and CPU count
 create_vm() {
-  VM_NAME="$1"
-  MEMORY="$2"
-  CPUS="$3"
-  echo "Creating Virtual Machine with name: $VM_NAME, memory: $MEMORY MB, CPUs: $CPUS..."
-  vboxmanage createvm --name "$VM_NAME" --ostype "Ubuntu_64" --register || log_error "Failed to create VM"
-  vboxmanage modifyvm "$VM_NAME" --memory "$MEMORY" --cpus "$CPUS" --nic1 nat --audio none --boot1 dvd --vrde on || log_error "Failed to configure VM"
-  log_success "Virtual Machine created and configured with name: $VM_NAME, memory: $MEMORY MB, CPUs: $CPUS."
+ VM_NAME="$1"
+MEMORY="$2"
+CPUS="$3"
+
+if vboxmanage list vms | grep -q "\"$VM_NAME\""; then
+  echo "VM with name \"$VM_NAME\" already exists."
+  exit 0
+fi
+
+echo "Creating Virtual Machine with name: $VM_NAME, memory: $MEMORY MB, CPUs: $CPUS..."
+vboxmanage createvm --name "$VM_NAME" --ostype "Ubuntu_64" --register || log_error "Failed to create VM"
+vboxmanage modifyvm "$VM_NAME" --memory "$MEMORY" --cpus "$CPUS" --nic1 nat --audio none --boot1 dvd --vrde on || log_error "Failed to configure VM"
+log_success "Virtual Machine created and configured with name: $VM_NAME, memory: $MEMORY MB, CPUs: $CPUS."
+
 }
 
 # Function to download Ubuntu Server ISO
@@ -35,7 +42,7 @@ download_ubuntu_iso() {
   ISO_FILE="$ISO_DIR/ubuntu-22.04-live-server-amd64.iso"
   echo "Downloading Ubuntu Server ISO..."
   mkdir -p "$ISO_DIR"
-  wget -O "$ISO_FILE" https://releases.ubuntu.com/22.04/ubuntu-22.04-live-server-amd64.iso || log_error "Failed to download Ubuntu Server ISO"
+  wget -O "$ISO_FILE" https://releases.ubuntu.com/24.04.1/ubuntu-24.04.1-live-server-amd64.iso || log_error "Failed to download Ubuntu Server ISO"
   log_success "Ubuntu Server ISO downloaded."
 }
 
