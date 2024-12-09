@@ -65,15 +65,29 @@ EOF
   
   log_success "Static IP $STATIC_IP configured for VM $VM_NAME."
 }
-
+is_shared_folder_mounted() {
+  VM_NAME="$1"
+  SHARED_FOLDER_NAME="shared"
+  
+  # List all shared folders for the VM and check if the folder is already mounted
+  shared_folders=$(VBoxManage showvminfo "$VM_NAME" --details | grep "SharedFolder")
+  
+  if echo "$shared_folders" | grep -q "$SHARED_FOLDER_NAME"; then
+    return 0  # Shared folder already mounted
+  else
+    return 1  # Shared folder not mounted
+  fi
+}
 # Function to mount directories between host and guest
 mount_directories() {
-  VM_NAME="$1"
-  echo "Mounting $HOST_DIR to $GUEST_DIR on VM $VM_NAME..."
-  
-  VBoxManage sharedfolder add "$VM_NAME" --name shared --hostpath "$HOST_DIR" --automount || log_error "Failed to mount directory for VM $VM_NAME."
-  
-  log_success "Directory $HOST_DIR mounted to $GUEST_DIR on VM $VM_NAME."
+ if is_shared_folder_mounted "$VM_NAME"; then
+    echo "Folder is already mounted on $VM_NAME."
+    log_success "Directory $HOST_DIR is already mounted to $GUEST_DIR on VM $VM_NAME."
+  else
+    echo "Mounting $HOST_DIR to $GUEST_DIR on VM $VM_NAME..."
+    VBoxManage sharedfolder add "$VM_NAME" --name shared --hostpath "$HOST_DIR" --automount || log_error "Failed to mount directory for VM $VM_NAME."
+    log_success "Directory $HOST_DIR mounted to $GUEST_DIR on VM $VM_NAME."
+  fi
 }
 
 # Function to install packages in the guest OS
