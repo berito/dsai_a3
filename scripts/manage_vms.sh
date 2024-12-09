@@ -38,7 +38,7 @@ stop_vm() {
   VM_NAME="$1"
   echo "Stopping the VM $VM_NAME..."
   
-  vboxmanage controlvm "$VM_NAME" acpipowerbutton || log_error "Failed to stop VM $VM_NAME"
+  vboxmanage controlvm "$VM_NAME" poweroff || log_error "Failed to stop VM $VM_NAME"
   
   log_success "VM $VM_NAME stopped."
 }
