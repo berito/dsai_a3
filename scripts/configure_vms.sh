@@ -139,20 +139,22 @@ main() {
   
   for VM_NAME in $VM_NAMES; do
     STATIC_IP="192.168.1.$((VM_COUNTER))"
-    
-    case "$ACTION" in
+     case "$ACTION" in
       setup)
         echo "Setting up network and shared directory for VM: $VM_NAME"
         configure_network "$VM_NAME"
-        configure_static_ip "$VM_NAME" "$STATIC_IP"
         mount_directories "$VM_NAME"
         ;;
       install)
         echo "Installing packages on VM: $VM_NAME"
         install_packages "$VM_NAME"
         ;;
+      static_ip)
+        echo "Configuring static IP for VM: $VM_NAME"
+        configure_static_ip "$VM_NAME" "$STATIC_IP"
+        ;;
       *)
-        log_error "Unsupported action: $ACTION. Use 'setup' or 'install'."
+        log_error "Unsupported action: $ACTION. Use 'setup', 'install', or 'static_ip'."
         ;;
     esac
     
