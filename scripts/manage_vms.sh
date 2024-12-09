@@ -108,7 +108,7 @@ manage_vms() {
   ACTION="$1"
   
   if [ "$ACTION" != "start" ] && [ "$ACTION" != "stop" ] && [ "$ACTION" != "list" ] && [ "$ACTION" != "list_running" ]; then
-    log_error "Invalid parameter. Please specify 'start', 'stop', 'list', or 'listall'."
+    log_error "Invalid parameter. Please specify 'start', 'stop', 'list', or 'list_running'."
   fi
   
   if [ "$ACTION" == "start" ]; then
