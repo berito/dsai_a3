@@ -31,7 +31,14 @@ is_vm_running() {
 
 configure_network() {
   VM_NAME="$1"
-  NETWORK_TYPE="$2"  # "NAT" or "Bridged"
+  
+  # Store the network type in a variable
+  NETWORK_TYPE="Bridged"  # Change this to "NAT" or "Bridged" as required
+
+  # Debugging: Check if NETWORK_TYPE is set correctly
+  if [ -z "$NETWORK_TYPE" ]; then
+    log_error "Network type is not specified. Please provide 'NAT' or 'Bridged'."
+  fi
 
   echo "Configuring network type $NETWORK_TYPE for VM $VM_NAME..."
   
