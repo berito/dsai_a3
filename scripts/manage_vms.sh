@@ -31,7 +31,7 @@ get_running_vms() {
   echo "$running_vms"
 }
 
-# Function to get the names of all stopped VMs
+# Function to get the names of all stopped VMs (not running)
 get_stopped_vms() {
   # List all VMs and filter out the running ones to get stopped ones
   stopped_vms=$(get_vms | grep -v -f <(get_running_vms))
@@ -90,12 +90,13 @@ stop_all_running_vms() {
   done
 }
 
-# Function to start all stopped VMs
-start_all_stopped_vms() {
+# Function to start all VMs that are not running
+start_all_non_running_vms() {
   stopped_vms=$(get_stopped_vms)
 
   if [ -z "$stopped_vms" ]; then
-    log_error "No stopped VMs to start."
+    echo "All VMs are already running."
+    return 0
   fi
 
   for vm in $stopped_vms; do
@@ -112,7 +113,7 @@ manage_vms() {
   fi
   
   if [ "$ACTION" == "start" ]; then
-    start_all_stopped_vms
+    start_all_non_running_vms
   elif [ "$ACTION" == "stop" ]; then
     stop_all_running_vms
   elif [ "$ACTION" == "list_running" ]; then
@@ -123,9 +124,4 @@ manage_vms() {
 }
 
 # Check if the action parameter is provided
-if [ $# -eq 0 ]; then
-  log_error "Please provide an action: 'start', 'stop', 'list_running', or 'list'."
-fi
-
-# Run the manage_vms function with the specified action
-manage_vms "$1"
+if [ $# -eq 0 ]; th
