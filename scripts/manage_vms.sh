@@ -107,7 +107,7 @@ start_all_stopped_vms() {
 manage_vms() {
   ACTION="$1"
   
-  if [ "$ACTION" != "start" ] && [ "$ACTION" != "stop" ] && [ "$ACTION" != "list" ] && [ "$ACTION" != "listall" ]; then
+  if [ "$ACTION" != "start" ] && [ "$ACTION" != "stop" ] && [ "$ACTION" != "list" ] && [ "$ACTION" != "list_running" ]; then
     log_error "Invalid parameter. Please specify 'start', 'stop', 'list', or 'listall'."
   fi
   
