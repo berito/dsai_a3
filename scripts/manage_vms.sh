@@ -14,8 +14,8 @@ log_error() {
 # Function to get the names of all VMs (including clones)
 get_vms() {
   # List all VMs and filter based on the naming pattern "node_" or your preferred naming convention
-  vms=$(vboxmanage list vms | grep 'node_' | awk -F '"' '{print $2}')
-  
+  vms=$(vboxmanage list vms | grep -E 'master|node_' | awk -F '"' '{print $2}')
+
   if [ -z "$vms" ]; then
     log_error "No VMs found."
   fi
