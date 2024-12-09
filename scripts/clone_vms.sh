@@ -15,18 +15,19 @@ log_error() {
 clone_vm() {
   ORIGINAL_VM_NAME="$1"
   CLONE_VM_NAME="$2"
-  MEMORY="$3"
-  CPUS="$4"
   
   # Clone the VM using VirtualBox CLI
-  echo "Cloning $ORIGINAL_VM_NAME to $CLONE_VM_NAME with $MEMORY MB memory and $CPUS CPUs..."
-  vboxmanage clonevm "$ORIGINAL_VM_NAME" --name "$CLONE_VM_NAME" --register --memory "$MEMORY" --cpus "$CPUS" || log_error "Failed to clone $ORIGINAL_VM_NAME to $CLONE_VM_NAME"
+  echo "Cloning $ORIGINAL_VM_NAME to $CLONE_VM_NAME..."
+  vboxmanage clonevm "$ORIGINAL_VM_NAME" --name "$CLONE_VM_NAME" --register || log_error "Failed to clone $ORIGINAL_VM_NAME to $CLONE_VM_NAME"
   
-  log_success "VM $CLONE_VM_NAME cloned successfully."
+  # Modify the memory and CPU for the cloned VM
+  modify_vm "$CLONE_VM_NAME" "$3" "$4"
+  
+  log_success "VM $CLONE_VM_NAME cloned and modified successfully."
 }
 
 # Function to modify an existing VM's memory and CPU
-update_vm() {
+modify_vm() {
   VM_NAME="$1"
   MEMORY="$2"
   CPUS="$3"
@@ -69,7 +70,7 @@ create_clones() {
     # Get the next available clone name
     CLONE_VM_NAME=$(get_next_clone_name)
     
-    # Clone the VM
+    # Clone the VM and modify memory and CPUs
     clone_vm "$ORIGINAL_VM_NAME" "$CLONE_VM_NAME" "$MEMORY" "$CPUS"
     echo "Finished cloning $CLONE_VM_NAME."
   done
@@ -81,7 +82,7 @@ update_master_vm() {
   CPUS="$2"
   
   # Update master VM
-  update_vm "master" "$MEMORY" "$CPUS"
+  modify_vm "master" "$MEMORY" "$CPUS"
 }
 
 # Function to update all node VMs
@@ -93,25 +94,25 @@ update_node_vms() {
   node_vms=$(vboxmanage list vms | grep -E 'node_' | awk -F '"' '{print $2}')
   
   for vm in $node_vms; do
-    update_vm "$vm" "$MEMORY" "$CPUS"
+    modify_vm "$vm" "$MEMORY" "$CPUS"
   done
 }
 
 # Check for action parameter (clone or update)
-if [ $# -lt 3 ]; then
-  log_error "Please provide ACTION (clone, update_master, or update_nodes), NUM_CLONES, MEMORY, and CPUS values."
+if [ $# -lt 2 ]; then
+  log_error "Please provide ACTION (clone, update_master, or update_nodes), and MEMORY, CPUS values."
 fi
 
 ACTION="$1"
-NUM_CLONES="$2"
-MEMORY="$3"
-CPUS="$4"
+MEMORY="$2"
+CPUS="$3"
 
 # Run the corresponding function based on the action parameter
 case "$ACTION" in
   "clone")
     # Create clones of the master VM
     ORIGINAL_VM_NAME="master"  # Modify this if the original VM name changes
+    NUM_CLONES="$MEMORY"  # Assuming you pass the number of clones as the second parameter
     create_clones "$ORIGINAL_VM_NAME" "$NUM_CLONES" "$MEMORY" "$CPUS"
     ;;
   "update_master")
