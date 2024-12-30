@@ -107,6 +107,7 @@ void simulate (double** E,  double** E_prev,double** R,
 	int root = 0;
 	int niter;
 	int rank =0, np=1;
+	int num_threads = 4;
 	MPI_Comm_size(MPI_COMM_WORLD,&np);
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	MPI_Request	send_request,recv_request;
@@ -498,6 +499,6 @@ int main (int argc, char** argv)
 	free (R);
 
 	MPI_Finalize(); //finlaize PMI
-	return 0;
+	// return 0;
 }
 
